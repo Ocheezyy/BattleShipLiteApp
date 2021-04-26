@@ -10,22 +10,99 @@ namespace BattleShipLite
         {
             WelcomeMessage();
 
-            var player1 = CreatePlayer("Player 1");
-            var player2 = CreatePlayer("Player 2");
+            var activePlayer = CreatePlayer("Player 1");
+            var opponent = CreatePlayer("Player 2");
             PlayerInfoModel winner = null;
 
             do
             {
-                // Run through the steps of game
-                    // Display grid from player 1 on gridmodel
-                    // Ask player 1 for shot 
-                    //determine if shot is valid
-                    // deteming shot results
-                    // Determine if game is over
+                Console.Clear();
+                DisplayShotGrid(activePlayer);
+
+                RecordPlayerShot(activePlayer, opponent);
+
+                var doesGameContinue = GameLogic.PlayerStillActive(opponent);
+                if (doesGameContinue)
+                {
+                    (activePlayer, opponent) = (opponent, activePlayer);
+                }
+                else
+                { winner = activePlayer; }
+
             } while (winner is null);
 
+            IdentifyWinner(winner);
 
             Console.ReadLine();
+        }
+
+        private static void IdentifyWinner(PlayerInfoModel winner)
+        {
+            Console.Clear();
+            Console.WriteLine($"Congratulations to {winner.UsersName} for winning!");
+            Console.WriteLine($"{ winner.UsersName } took { GameLogic.GetShotCount(winner) } shots");
+        }
+
+        private static void RecordPlayerShot(PlayerInfoModel activePlayer, PlayerInfoModel opponent)
+        {
+            var isValidShot = false;
+            var row = "";
+            var column = 0;
+            do
+            {
+                var shot = AskForShot();
+                if (shot.Length != 2)
+                { continue; }
+                (row, column) = GameLogic.SplitShotIntoRowAndColumn(shot);
+                isValidShot = GameLogic.ValidateShot(activePlayer, row, column);
+
+                if (!isValidShot)
+                {
+                    Console.WriteLine("Invalid shot location. Please try again.");
+                }
+            } while (!isValidShot);
+
+            var isAHit = GameLogic.IdentifyShotResult(opponent, row, column);
+
+            // Record results
+            GameLogic.MarkShotResult(activePlayer, row, column, isAHit);
+        }
+
+        private static string AskForShot()
+        {
+            Console.Write("\nPlease enter your shot selection: ");
+            var output = Console.ReadLine();
+            return output;
+        }
+
+        private static void DisplayShotGrid(PlayerInfoModel activePlayer)
+        {
+            var currentRow = activePlayer.ShotGrid[0].SpotLetter;
+            foreach (var gridSpot in activePlayer.ShotGrid)
+            {
+                if (gridSpot.SpotLetter != currentRow)
+                {
+                    Console.WriteLine();
+                    currentRow = gridSpot.SpotLetter;
+                }
+
+                if (gridSpot.Status == GridSpotStatus.Empty)
+                {
+                    Console.Write($" {gridSpot.SpotLetter}{gridSpot.SpotNumber} ");
+                }
+                else if (gridSpot.Status == GridSpotStatus.Hit)
+                {
+                    Console.Write(" X ");
+                }
+                else if (gridSpot.Status == GridSpotStatus.Miss)
+                {
+                    Console.Write(" O ");
+                }
+                else
+                {
+                    Console.Write(" ? ");
+                }
+            }
         }
 
         private static string GetUsersName()
@@ -35,32 +112,11 @@ namespace BattleShipLite
             return output;
         }
 
-        private static bool GridSpotValid(string spotLetter, int spotNumber)
-        {
-            // Use for placing ship and shot placement
-
-            return true;
-        }
-
-        private static void PrintGrid()
-        {
-            // Come back to and add grid as argument for print
-
-        }
-
-        private static string GenerateGrid()
-        {
-            // Decide on logic for generating
-
-            return "";
-        }
-
         private static PlayerInfoModel CreatePlayer(string playerTitle)
         {
             // instantiate user and ask for their name
-            var output = new PlayerInfoModel {UsersName = GetUsersName()};
-
             Console.WriteLine($"Player information for { playerTitle }");
+            var output = new PlayerInfoModel {UsersName = GetUsersName()};
 
             // Load up shot grid
             GameLogic.InitializeGrid(output);
@@ -74,20 +130,6 @@ namespace BattleShipLite
             return output;
         }
 
-        private static void FireShot(string spotLetter, int spotNumber)
-        {
-            if (!GridSpotValid(spotLetter, spotNumber))
-            {
-                throw new ArgumentOutOfRangeException("spotNumber", "Argument not in range of the grid!");
-            }
-            
-        }
-
-        private static void DisplayScore()
-        {
-            // Setup to display score 
-        }
-
         private static void WelcomeMessage()
         {
             Console.WriteLine("Welcome to Battleship Lite");
@@ -96,10 +138,10 @@ namespace BattleShipLite
 
         private static void PlaceShips(PlayerInfoModel model)
         {
-            var ShipCount = model.ShipLocations.Count;
+            var shipCount = model.ShipLocations.Count;
             do
             {
-                Console.WriteLine($"Where do you want to place ship #{ShipCount + 1}");
+                Console.WriteLine($"Where do you want to place ship #{shipCount + 1}");
                 var location = Console.ReadLine();
 
                 bool isValidLocations = GameLogic.PlaceShip(model, location);
@@ -109,7 +151,9 @@ namespace BattleShipLite
                     Console.WriteLine("That was not a valid location. Please try again.");
                 }
 
-            } while (ShipCount < 5);
+                shipCount = model.ShipLocations.Count;
+
+            } while (shipCount < 5);
         }
     }
 }
