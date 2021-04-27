@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Globalization;
+using System.Threading;
 using BattleShipLiteLibrary;
 using BattleShipLiteLibrary.Models;
 
@@ -40,7 +42,7 @@ namespace BattleShipLite
         {
             Console.Clear();
             Console.WriteLine($"Congratulations to {winner.UsersName} for winning!");
-            Console.WriteLine($"{ winner.UsersName } took { GameLogic.GetShotCount(winner) } shots");
+            Console.WriteLine($"{ char.ToUpper(winner.UsersName[0]) + winner.UsersName[1..]} took { GameLogic.GetShotCount(winner) } shots, { (5.0 / GameLogic.GetShotCount(winner)).ToString("P1", CultureInfo.DefaultThreadCurrentCulture) } accuracy");
         }
 
         private static void RecordPlayerShot(PlayerInfoModel activePlayer, PlayerInfoModel opponent)
@@ -50,7 +52,7 @@ namespace BattleShipLite
             var column = 0;
             do
             {
-                var shot = AskForShot();
+                var shot = AskForShot(activePlayer.UsersName);
                 if (shot.Length != 2)
                 { continue; }
                 (row, column) = GameLogic.SplitShotIntoRowAndColumn(shot);
@@ -65,12 +67,17 @@ namespace BattleShipLite
             var isAHit = GameLogic.IdentifyShotResult(opponent, row, column);
 
             // Record results
-            GameLogic.MarkShotResult(activePlayer, row, column, isAHit);
+            var output = GameLogic.MarkShotResult(activePlayer, row, column, isAHit);
+            if (!string.IsNullOrEmpty(output)){
+                Console.WriteLine(output);
+                Console.WriteLine("Press enter to proceed...");
+                Console.ReadLine();
+            }
         }
 
-        private static string AskForShot()
+        private static string AskForShot(string username)
         {
-            Console.Write("\nPlease enter your shot selection: ");
+            Console.Write($"\nPlease enter your shot selection, {username}: ");
             var output = Console.ReadLine();
             return output;
         }
