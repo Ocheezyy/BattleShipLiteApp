@@ -1,10 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Linq;
-using System.Net.Sockets;
-using System.Threading;
-using System.Xml;
 using BattleShipLiteLibrary.Models;
 
 namespace BattleShipLiteLibrary
