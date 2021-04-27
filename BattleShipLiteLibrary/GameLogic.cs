@@ -176,15 +176,26 @@ namespace BattleShipLiteLibrary
             
         }
 
-        public static void MarkShotResult(PlayerInfoModel player, string row, int column, bool isAHit)
+        public static string MarkShotResult(PlayerInfoModel player, string row, int column, bool isAHit)
         {
             foreach (var gridSpot in player.ShotGrid)
             {
                 if (gridSpot.SpotLetter == row.ToUpper() && gridSpot.SpotNumber == column)
                 {
-                    gridSpot.Status = isAHit ? GridSpotStatus.Hit : GridSpotStatus.Miss;
+                    if (isAHit)
+                    {
+                        gridSpot.Status = GridSpotStatus.Hit;
+                        return $"{gridSpot.SpotLetter}{gridSpot.SpotNumber} was a hit!";
+                    }
+                    else
+                    {
+                        gridSpot.Status = GridSpotStatus.Miss;
+                        return $"{gridSpot.SpotLetter}{gridSpot.SpotNumber} was a miss...";
+                    }
                 }
             }
+
+            return "";
         }
     }
 }
